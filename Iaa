@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo AI Analyzer</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, sans-serif;
+}
+
+body{
+min-height:100vh;
+background:black;
+overflow:hidden;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:20px;
+}
+
+.bg{
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at top,#7e22ce33,transparent 40%),
+radial-gradient(circle at bottom,#2563eb22,transparent 40%),
+black;
+}
+
+.stars{
+position:absolute;
+width:100%;
+height:100%;
+background-image:radial-gradient(white 1px, transparent 1px);
+background-size:40px 40px;
+animation:moveStars 20s linear infinite;
+opacity:0.3;
+}
+
+@keyframes moveStars{
+from{transform:translateY(0)}
+to{transform:translateY(-40px)}
+}
+
+.container{
+position:relative;
+z-index:2;
+width:100%;
+max-width:900px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(15px);
+border:1px solid rgba(255,255,255,0.1);
+padding:35px;
+border-radius:30px;
+box-shadow:0 0 40px rgba(168,85,247,0.2);
+animation:fade 1s ease;
+}
+
+@keyframes fade{
+from{
+opacity:0;
+transform:translateY(30px);
+}
+
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+h1{
+font-size:48px;
+text-align:center;
+margin-bottom:10px;
+background:linear-gradient(to right,#c084fc,#60a5fa);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+text-align:center;
+color:#bbb;
+margin-bottom:30px;
+font-size:18px;
+}
+
+.upload-box{
+border:2px dashed #9333ea;
+border-radius:25px;
+padding:50px 20px;
+text-align:center;
+transition:0.3s;
+background:rgba(255,255,255,0.03);
+}
+
+.upload-box:hover{
+background:rgba(147,51,234,0.1);
+transform:scale(1.01);
+}
+
+input{
+display:none;
+}
+
+.upload-btn{
+display:inline-block;
+padding:15px 30px;
+background:linear-gradient(to right,#9333ea,#2563eb);
+border-radius:15px;
+font-weight:bold;
+margin-top:20px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.upload-btn:hover{
+transform:scale(1.05);
+}
+
+.preview{
+margin-top:30px;
+text-align:center;
+display:none;
+}
+
+.preview img{
+width:280px;
+height:280px;
+object-fit:cover;
+border-radius:25px;
+box-shadow:0 0 30px rgba(255,255,255,0.2);
+position:relative;
+}
+
+.scanner{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+height:4px;
+background:linear-gradient(to right,transparent,#c084fc,transparent);
+box-shadow:0 0 20px #c084fc;
+animation:scan 2s linear infinite;
+border-radius:20px;
+}
+
+@keyframes scan{
+0%{top:0}
+100%{top:calc(100% - 4px)}
+}
+
+.loading{
+display:none;
+margin-top:30px;
+text-align:center;
+}
+
+.loader{
+width:90px;
+height:90px;
+border:6px solid rgba(255,255,255,0.1);
+border-top:6px solid #c084fc;
+border-radius:50%;
+animation:spin 1s linear infinite;
+margin:auto;
+}
+
+@keyframes spin{
+100%{transform:rotate(360deg)}
+}
+
+.result{
+display:none;
+margin-top:35px;
+animation:fade 1s ease;
+}
+
+.score-box{
+background:linear-gradient(to right,#9333ea,#2563eb);
+padding:30px;
+border-radius:25px;
+text-align:center;
+margin-bottom:25px;
+}
+
+.score-number{
+font-size:90px;
+font-weight:bold;
+}
+
+.bar{
+background:rgba(255,255,255,0.1);
+height:14px;
+border-radius:20px;
+overflow:hidden;
+margin-top:8px;
+}
+
+.bar-fill{
+height:100%;
+background:linear-gradient(to right,#c084fc,#60a5fa);
+width:0;
+animation:fillBar 1.5s forwards;
+}
+
+@keyframes fillBar{
+from{width:0}
+}
+
+.item{
+margin-bottom:20px;
+}
+
+.terms{
+margin-top:25px;
+padding:18px;
+background:rgba(255,255,255,0.05);
+border-radius:20px;
+font-size:14px;
+color:#aaa;
+line-height:1.5;
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="stars"></div>
+
+<div class="container">
+<h1>Photo AI</h1>
+<p class="subtitle">Envie sua foto e receba uma análise futurista ✨</p>
+
+<div class="upload-box">
+<h2>Carregar Foto</h2>
+<p style="margin-top:10px;color:#aaa;">PNG, JPG ou WEBP</p>
+
+<label class="upload-btn">
+Escolher Imagem
+<input type="file" accept="image/*" id="imageInput">
+</label>
+</div>
+
+<div class="preview" id="preview">
+<div style="position:relative;width:280px;margin:auto;">
+<img id="previewImg">
+<div class="scanner"></div>
+</div>
+</div>
+
+<div class="loading" id="loading">
+<div class="loader"></div>
+<p style="margin-top:20px;font-size:22px;">Analisando rosto...</p>
+</div>
+
+<div class="result" id="result">
+<div class="score-box">
+<p>NOTA FINAL</p>
+<div class="score-number" id="score">8.7</div>
+<p>de 10</p>
+</div>
+
+<div class="item">
+<div style="display:flex;justify-content:space-between;">
+<span>Rosto</span>
+<span id="faceText"></span>
+</div>
+<div class="bar"><div class="bar-fill" id="faceBar"></div></div>
+</div>
+
+<div class="item">
+<div style="display:flex;justify-content:space-between;">
+<span>Olhos</span>
+<span id="eyesText"></span>
+</div>
+<div class="bar"><div class="bar-fill" id="eyesBar"></div></div>
+</div>
+
+<div class="item">
+<div style="display:flex;justify-content:space-between;">
+<span>Estilo</span>
+<span id="styleText"></span>
+</div>
+<div class="bar"><div class="bar-fill" id="styleBar"></div></div>
+</div>
+
+<div style="margin-top:30px;background:rgba(255,255,255,0.05);padding:20px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);">
+<h2 style="margin-bottom:15px;font-size:24px;">Análise da Foto</h2>
+<ul id="tips" style="color:#ccc;line-height:1.8;padding-left:18px;">
+</ul>
+</div>
+
+<div class="terms">
+As análises são apenas para entretenimento e utilizam uma simulação baseada em características visuais da imagem enviada.
+</div>
+</div>
+</div>
+
+<script>
+const input = document.getElementById("imageInput");
+const preview = document.getElementById("preview");
+const previewImg = document.getElementById("previewImg");
+const loading = document.getElementById("loading");
+const result = document.getElementById("result");
+
+input.addEventListener("change", function(){
+const file = this.files[0];
+
+if(file){
+const reader = new FileReader();
+
+reader.onload = function(e){
+preview.style.display = "block";
+previewImg.src = e.target.result;
+
+loading.style.display = "block";
+result.style.display = "none";
+
+setTimeout(()=>{
+loading.style.display = "none";
+result.style.display = "block";
+
+const rosto = (Math.random()*5+4).toFixed(1);
+const olhos = (Math.random()*5+4).toFixed(1);
+const estilo = (Math.random()*5+4).toFixed(1);
+
+const final = ((parseFloat(rosto)+parseFloat(olhos)+parseFloat(estilo))/3).toFixed(1);
+
+document.getElementById("score").innerText = final;
+
+const dicas = [
+"A iluminação poderia destacar melhor o rosto 💡",
+"O ângulo da câmera influencia bastante no resultado 📷",
+"Uma foto mais nítida melhora a análise ✨",
+"Expressão natural deixa a imagem mais equilibrada 😄",
+"O enquadramento ficou bom 👀",
+"Um fundo mais limpo ajuda a destacar a pessoa 🌌",
+"A qualidade da câmera interfere na nota final 📸",
+"A posição do rosto pode mudar bastante o resultado 🔍"
+];
+
+let escolhidas = dicas.sort(()=>0.5-Math.random()).slice(0,4);
+
+const tipsList = document.getElementById("tips");
+tipsList.innerHTML = "";
+
+escolhidas.forEach(item=>{
+const li = document.createElement("li");
+li.innerText = item;
+tipsList.appendChild(li);
+});
+
+setBar("face", rosto);
+setBar("eyes", olhos);
+setBar("style", estilo);
+
+},2500);
+}
+
+reader.readAsDataURL(file);
+}
+});
+
+function setBar(id,value){
+document.getElementById(id+"Text").innerText = value+"/10";
+const bar = document.getElementById(id+"Bar");
+bar.style.width = (value*10)+"%";
+}
+</script>
+
+</body>
+</html>
